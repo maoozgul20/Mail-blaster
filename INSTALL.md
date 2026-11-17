@@ -91,7 +91,7 @@ Double-click **`DEPLOY_DASHBOARD.bat`** (builds with your API URL and publishes 
 1. Make sure `.env` has `API_BASE_URL` and `FRONTEND_URL` (the extension also reads `DASHBOARD_URL`, which defaults to `FRONTEND_URL`).
 2. Double-click **`BUILD_EXTENSION.bat`**. It creates `extension\dist` and `extension\mailblaster-extension.zip`.
 3. Chrome → `chrome://extensions` → switch on **Developer mode** → **Load unpacked** → select the `extension\dist` folder.
-4. Click the MailBlaster icon → *Options* (opens automatically on first install) → sign in with your dashboard account.
+4. Click the MailBlaster icon → *Options* (opens automatically on first install) → sign in with your dashboard account, or click **No account yet? Create one** to create it right there.
 
 (To use the prebuilt `releases/mailblaster-extension.zip`: unzip, load it unpacked, then enter your API and dashboard URLs in the options page. Chrome will ask permission for that address.)
 

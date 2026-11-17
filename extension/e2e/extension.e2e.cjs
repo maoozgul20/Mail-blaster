@@ -49,19 +49,27 @@ const GMAIL = `<!doctype html><html><head><meta charset="utf-8"><title>Inbox - G
   if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 20000 });
   const extId = new URL(sw.url()).host;
   const email = `ext${Date.now()}@test.dev`;
-  await post('/api/auth/signup', { email, password: 'password-123' });
+  // the extension opens its own options tab right after install: let it settle and close it so it cannot race with our navigation
+  await new Promise((r) => setTimeout(r, 2500));
+  for (const p of ctx.pages()) if (p.url().includes('options.html')) await p.close();
 
-  await step('options page: sign in', async () => {
+  await step('options page: create an account, sign out, sign in again', async () => {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => problems.push(`options: ${e.message}`));
     await page.goto(`chrome-extension://${extId}/options.html`);
+    await page.getByRole('button', { name: 'No account yet? Create one' }).click();
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Password').fill('password-123');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await page.getByText(`Signed in as`).waitFor();
-    await page.getByLabel(/API URL/).waitFor();
+    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await page.getByText('Signed in as').waitFor();
+    await page.getByText(email).first().waitFor();
     assert.equal(await page.getByLabel(/API URL/).inputValue(), API);
-    await page.screenshot({ path: `${SHOTS}/ext-1-options.png` });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/ext-1-options.png` });
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill('password-123');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByText('Signed in as').waitFor();
     const popup = await ctx.newPage();
     await popup.goto(`chrome-extension://${extId}/popup.html`);
     await popup.getByText(email).waitFor();
@@ -92,7 +100,7 @@ const GMAIL = `<!doctype html><html><head><meta charset="utf-8"><title>Inbox - G
     await gmail.getByText('Connected', { exact: true }).waitFor();
     await gmail.getByText('2 valid').first().waitFor();
     await gmail.getByText('from the To field').waitFor();
-    await gmail.screenshot({ path: `${SHOTS}/ext-2-panel.png` });
+    await gmail.waitForTimeout(1000); await gmail.screenshot({ path: `${SHOTS}/ext-2-panel.png` });
   });
 
   await step('CSV import with column mapping, duplicates and invalid rows', async () => {
@@ -130,7 +138,7 @@ const GMAIL = `<!doctype html><html><head><meta charset="utf-8"><title>Inbox - G
     assert.equal(await gmail.getByLabel('Maximum pause').inputValue(), '20');
     await openSec('Advanced');
     await gmail.getByText('Track opens').waitFor();
-    await gmail.screenshot({ path: `${SHOTS}/ext-3-sections.png` });
+    await gmail.waitForTimeout(1000); await gmail.screenshot({ path: `${SHOTS}/ext-3-sections.png` });
   });
 
   await step('Send campaign: one individual job per recipient, compose is discarded', async () => {

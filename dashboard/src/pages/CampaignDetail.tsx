@@ -9,13 +9,14 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { CampaignActions } from './Campaigns';
 import { errMsg, useToast } from '@/components/toast';
 import { downloadBlob, fmtDate, fmtNum, humanSeconds, pct, timeAgo } from '@/lib/utils';
+import { CountUp } from '@/components/motion';
 import type { RecipientFilter } from '@mailblaster/shared';
 
 const FILTERS: [RecipientFilter, string][] = [['all', 'All'], ['pending', 'Pending'], ['queued', 'Queued'], ['sent', 'Sent'], ['opened', 'Opened'], ['not_opened', 'Not opened'], ['clicked', 'Clicked'], ['replied', 'Replied'], ['no_reply', 'No reply'], ['bounced', 'Bounced'], ['unsubscribed', 'Unsubscribed'], ['failed', 'Failed'], ['skipped', 'Skipped']];
 const LIMIT = 50;
 
 function StatCard({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
-  return <Card className="p-4"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1.5 text-2xl font-semibold tabular-nums">{value}</p>{hint && <p className="text-xs text-muted-foreground">{hint}</p>}</Card>;
+  return <Card className="lift p-4"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1.5 text-2xl font-semibold tabular-nums">{typeof value === 'number' ? <CountUp value={value} /> : value}</p>{hint && <p className="text-xs text-muted-foreground">{hint}</p>}</Card>;
 }
 
 export function RecipientDialog({ id, onClose }: { id: string | null; onClose: () => void }) {
@@ -96,17 +97,17 @@ export default function CampaignDetail() {
       {data.jobs.failed > 0 && <Alert tone="error" className="mb-4" title={`${data.jobs.failed} job(s) failed`}><Button size="sm" variant="outline" className="mt-2" loading={retry.isPending} onClick={() => retry.mutate()}><RotateCcw className="h-3.5 w-3.5" /> Retry temporary failures</Button></Alert>}
       {data.account?.status === 'reauth_required' && <Alert tone="warn" className="mb-4" title="Sending is on hold">Google authorization for {data.account.email} expired. <Link className="underline" to="/settings/account">Reconnect Gmail</Link> and the queue continues automatically.</Alert>}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-        <StatCard label="Total recipients" value={fmtNum(s.total)} />
-        <StatCard label="Sent" value={fmtNum(s.sent)} hint={pct(s.sent, s.total)} />
-        <StatCard label="Pending" value={fmtNum(s.pending + s.queued)} hint={`${s.pending} draft · ${s.queued} queued`} />
-        <StatCard label="Opened" value={fmtNum(s.opened)} hint={s.sent ? `${pct(s.opened, s.sent)} (approximate)` : 'Not available'} />
-        <StatCard label="Clicked" value={fmtNum(s.clicked)} hint={s.sent ? pct(s.clicked, s.sent) : 'Not available'} />
-        <StatCard label="Replied" value={fmtNum(s.replied)} hint={s.sent ? pct(s.replied, s.sent) : 'Not available'} />
-        <StatCard label="Bounced" value={fmtNum(s.bounced)} />
-        <StatCard label="Unsubscribed" value={fmtNum(s.unsubscribed)} />
+      <div className="stagger mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <StatCard label="Total recipients" value={s.total} />
+        <StatCard label="Sent" value={s.sent} hint={pct(s.sent, s.total)} />
+        <StatCard label="Pending" value={s.pending + s.queued} hint={`${s.pending} draft · ${s.queued} queued`} />
+        <StatCard label="Opened" value={s.opened} hint={s.sent ? `${pct(s.opened, s.sent)} (approximate)` : 'Not available'} />
+        <StatCard label="Clicked" value={s.clicked} hint={s.sent ? pct(s.clicked, s.sent) : 'Not available'} />
+        <StatCard label="Replied" value={s.replied} hint={s.sent ? pct(s.replied, s.sent) : 'Not available'} />
+        <StatCard label="Bounced" value={s.bounced} />
+        <StatCard label="Unsubscribed" value={s.unsubscribed} />
         <StatCard label="Failed / skipped" value={`${fmtNum(s.failed)} / ${fmtNum(s.skipped)}`} />
-        <StatCard label="Follow-ups sent" value={fmtNum(s.follow_ups_sent)} hint={data.jobs.followups_queued ? `${data.jobs.followups_queued} scheduled` : undefined} />
+        <StatCard label="Follow-ups sent" value={s.follow_ups_sent} hint={data.jobs.followups_queued ? `${data.jobs.followups_queued} scheduled` : undefined} />
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-3">

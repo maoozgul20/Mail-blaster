@@ -212,10 +212,21 @@ describe('pause / resume / cancel', () => {
     expect(await count(s.db, `public.campaign_recipients where campaign_id=$1 and status='skipped'`, [c.id])).toBeGreaterThanOrEqual(2);
   });
 
-  it('only drafts can be deleted, and duplicates start as fresh drafts', async () => {
+  it('only drafts/finished campaigns can be deleted (cascade), active ones must be cancelled first; duplicates start as fresh drafts', async () => {
     const s = await setup();
     const c = await makeCampaign(s, { n: 2 });
     await expect(s.db.userRpc(s.user, 'delete_campaign', { p_id: c.id })).rejects.toThrow(/only draft/);
+    // finished campaigns can be deleted, with everything that belongs to them; suppression is kept
+    const fin = await makeCampaign(s, { n: 2, name: 'finished' });
+    await s.db.userRpc(s.user, 'cancel_campaign', { p_id: fin.id });
+    await s.db.q(`insert into public.suppression_entries(user_id,email,reason) values ($1,'keep@example.com','unsubscribed')`, [s.user]);
+    const other = await s.db.createUser('o2@test.dev');
+    await expect(s.db.userRpc(other, 'delete_campaign', { p_id: fin.id })).rejects.toThrow(/only draft/);
+    await s.db.userRpc(s.user, 'delete_campaign', { p_id: fin.id });
+    expect(await count(s.db, `public.campaigns where id=$1`, [fin.id])).toBe(0);
+    expect(await count(s.db, `public.campaign_recipients where campaign_id=$1`, [fin.id])).toBe(0);
+    expect(await count(s.db, `public.sending_jobs where campaign_id=$1`, [fin.id])).toBe(0);
+    expect(await count(s.db, `public.suppression_entries`)).toBe(1);
     const d = await s.db.userRpc(s.user, 'duplicate_campaign', { p_id: c.id });
     const [row] = await s.db.q(`select status, name from public.campaigns where id=$1`, [d.id]);
     expect(row.status).toBe('draft');

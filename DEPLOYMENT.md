@@ -43,7 +43,7 @@ npm install
 npm test                      # optional but recommended
 ```
 
-* **Database changes**: new files in `supabase/migrations/` are additive. Regenerate and run only the *new* migration in the SQL Editor (`npm run migrations:combine` rebuilds the combined file; do not re-run old migrations).
+* **Database changes**: new files in `supabase/migrations/` are additive (for example `0007_delete_campaigns.sql` allows deleting finished campaigns: open it in Notepad++, paste it into the Supabase SQL Editor and click Run once). Regenerate and run only the *new* migration in the SQL Editor (`npm run migrations:combine` rebuilds the combined file; do not re-run old migrations).
 * Re-run `DEPLOY_WORKER.bat` / `DEPLOY_DASHBOARD.bat`; rebuild the extension and click *Reload* on `chrome://extensions`.
 * **Safe to deploy mid-campaign**: state is in PostgreSQL. A run interrupted by a deploy leaves at most one job in `claimed` (recovered after 2 minutes) or `ambiguous` (reconciled, never duplicated).
 

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, Download, ExternalLink, Pause, Pencil, Play, PlusCircle, Search, Trash2, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Button, Card, EmptyState, Input, PageHeader, Pagination, Progress, Skeleton, Table, TBody, TD, TH, THead, TR } from '@/components/ui';
+import { Button, Card, Checkbox, EmptyState, Input, PageHeader, Pagination, Progress, Skeleton, Table, TBody, TD, TH, THead, TR } from '@/components/ui';
 import { StatusBadge } from '@/components/StatusBadge';
 import { errMsg, useToast } from '@/components/toast';
 import { downloadBlob, fmtDate, fmtNum } from '@/lib/utils';
@@ -11,6 +11,7 @@ import type { CampaignRow } from '@mailblaster/shared';
 
 const STATUSES = ['', 'draft', 'scheduled', 'queued', 'running', 'paused', 'completed', 'cancelled', 'failed'];
 const LIMIT = 25;
+export const DELETABLE = ['draft', 'completed', 'cancelled', 'failed'];
 
 export function useCampaignActions() {
   const qc = useQueryClient();
@@ -25,7 +26,17 @@ export function useCampaignActions() {
     resume: (id: string) => run('Campaign resumed', () => api.campaignAction(id, 'resume')),
     cancel: (id: string) => { if (confirm('Cancel this campaign? Queued emails and follow-ups will be dropped. Emails already sent cannot be recalled.')) return run('Campaign cancelled', () => api.campaignAction(id, 'cancel')); },
     duplicate: (id: string) => run('Duplicated as a new draft', () => api.campaignAction(id, 'duplicate'), (r) => nav(`/campaigns/${r.id}/edit`)),
-    remove: (id: string) => { if (confirm('Delete this draft?')) return run('Draft deleted', () => api.deleteCampaign(id)); },
+    remove: (id: string, name = 'this campaign') => {
+      if (confirm(`Delete "${name}"?\n\nIts recipients, tracking history and any pending follow-ups are removed permanently. Emails already sent stay in people's inboxes. Unsubscribe/suppression entries are kept.`)) return run('Campaign deleted', () => api.deleteCampaign(id));
+    },
+    removeMany: async (ids: string[]) => {
+      if (!confirm(`Delete ${ids.length} campaign(s) permanently?\n\nRecipients, tracking history and pending follow-ups are removed. Suppression entries are kept.`)) return false;
+      let ok = 0;
+      for (const id of ids) { try { await api.deleteCampaign(id); ok++; } catch (e) { toast.error(errMsg(e)); } }
+      if (ok) toast.success(`${ok} campaign(s) deleted`);
+      refresh();
+      return true;
+    },
     exportCsv: async (id: string, name: string) => { try { downloadBlob(await api.downloadCsv(`/api/campaigns/${id}/export.csv`), `${name.replace(/[^\w-]+/g, '_')}-recipients.csv`); } catch (e) { toast.error(errMsg(e)); } },
   };
 }
@@ -42,7 +53,7 @@ export function CampaignActions({ c }: { c: Pick<CampaignRow, 'id' | 'status' | 
       {c.status === 'paused' && <Button variant="ghost" size="icon" title="Resume" aria-label="Resume" onClick={() => a.resume(c.id)}><Play className="h-4 w-4" /></Button>}
       <Button variant="ghost" size="icon" title="Duplicate" aria-label="Duplicate" onClick={() => a.duplicate(c.id)}><Copy className="h-4 w-4" /></Button>
       {canCancel && <Button variant="ghost" size="icon" title="Cancel" aria-label="Cancel" onClick={() => a.cancel(c.id)}><XCircle className="h-4 w-4 text-amber-400" /></Button>}
-      {c.status === 'draft' && <Button variant="ghost" size="icon" title="Delete draft" aria-label="Delete draft" onClick={() => a.remove(c.id)}><Trash2 className="h-4 w-4 text-rose-400" /></Button>}
+      {DELETABLE.includes(c.status) && <Button variant="ghost" size="icon" title="Delete campaign" aria-label="Delete campaign" onClick={() => a.remove(c.id, c.name)}><Trash2 className="h-4 w-4 text-rose-400" /></Button>}
       <Button variant="ghost" size="icon" title="Export CSV" aria-label="Export CSV" onClick={() => a.exportCsv(c.id, c.name)}><Download className="h-4 w-4" /></Button>
     </div>
   );
@@ -52,11 +63,14 @@ export default function Campaigns() {
   const [status, setStatus] = React.useState('');
   const [search, setSearch] = React.useState('');
   const [offset, setOffset] = React.useState(0);
+  const [sel, setSel] = React.useState<Set<string>>(new Set());
+  const actions = useCampaignActions();
   const q = useQuery({
     queryKey: ['campaigns', status, search, offset],
     queryFn: () => api.listCampaigns({ status, search, limit: LIMIT, offset }),
     refetchInterval: 8000, placeholderData: (p) => p,
   });
+  const deletable = (q.data?.rows ?? []).filter((c) => DELETABLE.includes(c.status));
   return (
     <>
       <PageHeader title="Campaigns" description="Each recipient is an independent job in the PostgreSQL queue, sent one at a time."
@@ -70,15 +84,24 @@ export default function Campaigns() {
             ))}
           </div>
         </div>
+        {sel.size > 0 && (
+          <div className="flex items-center gap-3 border-b border-border/60 bg-rose-500/10 px-4 py-2 text-sm animate-fade">
+            <span>{sel.size} selected</span>
+            <Button size="sm" variant="destructive" onClick={async () => { if (await actions.removeMany([...sel])) setSel(new Set()); }}><Trash2 className="h-3.5 w-3.5" /> Delete selected</Button>
+            <Button size="sm" variant="ghost" onClick={() => setSel(new Set())}>Clear</Button>
+            <span className="ml-auto text-xs text-muted-foreground">Running or scheduled campaigns must be cancelled first.</span>
+          </div>
+        )}
         {q.isLoading ? <div className="space-y-3 p-4">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}</div> : q.data?.rows.length === 0 ? (
           <EmptyState icon={<PlusCircle className="h-5 w-5" />} title={status || search ? 'No campaigns match your filters' : 'Create your first campaign'}>Import recipients, write one message, and MailBlaster sends it individually and personalised at a safe pace.</EmptyState>
         ) : (
           <Table>
-            <THead><TR><TH>Campaign</TH><TH>Status</TH><TH className="min-w-[160px]">Progress</TH><TH className="text-right">Recipients</TH><TH className="text-right">Sent</TH><TH className="text-right">Opened</TH><TH className="text-right">Replies</TH><TH className="text-right">Bounces</TH><TH className="text-right">Failed</TH><TH>Created</TH><TH className="text-right">Actions</TH></TR></THead>
+            <THead><TR><TH className="w-8"><Checkbox aria-label="Select all deletable campaigns" checked={deletable.length > 0 && deletable.every((c) => sel.has(c.id))} onChange={() => setSel(deletable.every((c) => sel.has(c.id)) ? new Set() : new Set(deletable.map((c) => c.id)))} /></TH><TH>Campaign</TH><TH>Status</TH><TH className="min-w-[160px]">Progress</TH><TH className="text-right">Recipients</TH><TH className="text-right">Sent</TH><TH className="text-right">Opened</TH><TH className="text-right">Replies</TH><TH className="text-right">Bounces</TH><TH className="text-right">Failed</TH><TH>Created</TH><TH className="text-right">Actions</TH></TR></THead>
             <TBody>{q.data?.rows.map((c) => {
               const done = c.sent + c.failed + c.skipped + c.bounced + c.unsubscribed;
               return (
                 <TR key={c.id}>
+                  <TD><Checkbox aria-label={`Select ${c.name}`} disabled={!DELETABLE.includes(c.status)} checked={sel.has(c.id)} onChange={() => { const n = new Set(sel); n.has(c.id) ? n.delete(c.id) : n.add(c.id); setSel(n); }} /></TD>
                   <TD><Link to={`/campaigns/${c.id}`} className="font-medium hover:underline">{c.name}</Link><p className="max-w-[260px] truncate text-xs text-muted-foreground">{c.subject}</p></TD>
                   <TD><StatusBadge status={c.status} />{c.status === 'scheduled' && <p className="mt-1 text-[11px] text-muted-foreground">{fmtDate(c.start_at)}</p>}</TD>
                   <TD><Progress value={c.total ? (Math.min(done, c.total) / c.total) * 100 : 0} /><p className="mt-1 text-[11px] text-muted-foreground">{c.sent} sent · {c.queued + c.pending} pending</p></TD>

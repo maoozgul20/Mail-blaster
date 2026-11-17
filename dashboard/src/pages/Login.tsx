@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { Alert, Button, Card, Field, Input } from '@/components/ui';
 import { errMsg } from '@/components/toast';
 import { Logo } from '@/components/Layout';
+import { Orbs } from '@/components/motion';
 
 export default function Login() {
   const { session } = useAuth();
@@ -33,21 +34,22 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between p-12 lg:flex">
+    <div className="relative grid min-h-screen lg:grid-cols-2">
+      <Orbs />
+      <div className="relative z-10 hidden flex-col justify-between p-12 lg:flex">
         <Logo />
         <div className="space-y-8">
           <h2 className="text-4xl font-semibold leading-tight tracking-tight">Personal outreach, <span className="gradient-text">sent one by one</span>, from your own Gmail.</h2>
-          <ul className="space-y-4 text-muted-foreground">
+          <ul className="stagger space-y-4 text-muted-foreground">
             {[{ I: Mail, t: 'Every recipient gets an individual, personalised email' }, { I: Clock, t: 'Randomised pacing that keeps running when your computer is off' }, { I: Repeat, t: 'Automatic follow-ups that stop the moment someone replies' }, { I: ShieldCheck, t: 'Your Gmail tokens are encrypted; unsubscribes are honoured automatically' }].map(({ I, t }) => (
-              <li key={t} className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 text-primary"><I className="h-4 w-4" /></span>{t}</li>
+              <li key={t} className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-indigo-500/30 to-fuchsia-500/20 text-indigo-200 transition-transform hover:scale-110 hover:rotate-3"><I className="h-4 w-4" /></span>{t}</li>
             ))}
           </ul>
         </div>
         <p className="text-xs text-muted-foreground">Runs entirely on free tiers: Cloudflare Workers + Pages and Supabase.</p>
       </div>
-      <div className="flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8">
+      <div className="relative z-10 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md animate-pop-in p-8">
           <div className="mb-6 lg:hidden"><Logo /></div>
           <h1 className="text-2xl font-semibold">{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
           <p className="mb-6 mt-1 text-sm text-muted-foreground">{mode === 'login' ? 'Sign in to manage your campaigns.' : 'This account is separate from your Gmail account.'}</p>

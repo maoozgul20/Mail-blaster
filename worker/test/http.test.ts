@@ -100,6 +100,7 @@ describe('HTTP security basics', () => {
     expect(last).toBe(429);
     expect((await h.call(null, 'POST', '/api/auth/signup', { email: 'new@b.co', password: 'longenough1' })).json.needs_confirmation).toBe(true);
     expect((await h.call(null, 'POST', '/api/auth/signup', { email: 'new@b.co', password: 'longenough1' }, { env: { ALLOW_SIGNUPS: 'false' } })).status).toBe(403);
+    expect((await h.call(null, 'POST', '/api/auth/signup', { email: 'null-name@b.co', password: 'longenough1', full_name: null })).status).toBe(200); // extension messaging turns an empty name into null
     expect((await h.call(null, 'POST', '/api/auth/signup', { email: 'bad', password: 'longenough1' })).status).toBe(400);
     expect((await h.call(null, 'POST', '/api/auth/signup', { email: 'a@b.co', password: 'short' })).status).toBe(400);
   });

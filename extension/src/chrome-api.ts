@@ -37,4 +37,9 @@ export async function bg<T = any>(req: BgRequest): Promise<T> {
 }
 
 /** Calls any ApiClient method through the background worker (content scripts cannot call the API directly because of CORS). */
-export const call = <T = any>(method: string, ...args: unknown[]) => bg<T>({ type: 'call', method, args });
+export const call = <T = any>(method: string, ...args: unknown[]) => {
+  // chrome.runtime messages are JSON: a trailing `undefined` argument would arrive as `null`, so drop trailing undefined values
+  const a = [...args];
+  while (a.length && a[a.length - 1] === undefined) a.pop();
+  return bg<T>({ type: 'call', method, args: a });
+};

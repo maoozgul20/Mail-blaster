@@ -13,9 +13,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'gradient-bg text-white shadow-lg shadow-indigo-900/30 hover:brightness-110',
-        secondary: 'bg-accent text-accent-foreground hover:bg-accent/70 border border-border',
-        outline: 'border border-border bg-transparent hover:bg-accent',
+        default: 'gradient-bg text-white shadow-lg shadow-indigo-900/40 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-700/40 hover:brightness-110',
+        secondary: 'bg-accent text-accent-foreground hover:bg-accent/70 hover:-translate-y-px border border-border',
+        outline: 'border border-border bg-transparent hover:bg-accent hover:border-primary/40',
         ghost: 'hover:bg-accent',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         link: 'text-primary underline-offset-4 hover:underline',
@@ -135,7 +135,7 @@ export function DialogContent({ className, children, title, description, ...p }:
 export const Skeleton = ({ className }: { className?: string }) => <div className={cn('animate-pulse rounded-md bg-white/5', className)} />;
 export const Progress = ({ value, className }: { value: number; className?: string }) => (
   <div className={cn('h-2 w-full overflow-hidden rounded-full bg-white/10', className)} role="progressbar" aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100}>
-    <div className="gradient-bg h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    <div className="gradient-bg progress-shimmer relative h-full overflow-hidden rounded-full transition-all duration-700 ease-out" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
   </div>
 );
 

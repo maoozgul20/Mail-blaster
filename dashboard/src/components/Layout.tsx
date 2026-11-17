@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { cn, timeAgo } from '@/lib/utils';
 import { Button } from './ui';
+import { Orbs, PageTransition } from './motion';
 
 const NAV = [
   { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -24,7 +25,7 @@ const NAV = [
 export function Logo() {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="gradient-bg grid h-9 w-9 place-items-center rounded-xl shadow-lg shadow-indigo-900/40"><Mail className="h-5 w-5 text-white" /></div>
+      <div className="gradient-bg grid h-9 w-9 place-items-center rounded-xl shadow-lg shadow-indigo-900/40 transition-transform duration-300 hover:rotate-6 hover:scale-110"><Mail className="h-5 w-5 text-white" /></div>
       <span className="text-lg font-semibold tracking-tight">MailBlaster <span className="gradient-text">AI</span></span>
     </div>
   );
@@ -79,8 +80,8 @@ export function Layout() {
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label="Main">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} end={!!n.end}
-            className={({ isActive }) => cn('flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground', isActive && 'bg-primary/15 text-foreground ring-1 ring-primary/30')}>
-            <n.icon className="h-4 w-4" />{n.label}
+            className={({ isActive }) => cn('group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:bg-white/5 hover:text-foreground', isActive && 'bg-gradient-to-r from-primary/25 to-secondary/10 text-foreground ring-1 ring-primary/30 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-gradient-to-b before:from-indigo-300 before:to-fuchsia-400')}>
+            <n.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />{n.label}
           </NavLink>
         ))}
       </nav>
@@ -96,15 +97,16 @@ export function Layout() {
   );
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border/60 bg-card/40 backdrop-blur lg:block">{sidebar}</aside>
+    <div className="relative flex min-h-screen">
+      <Orbs />
+      <aside className="sticky top-0 z-20 hidden h-screen w-64 shrink-0 border-r border-border/60 bg-card/40 backdrop-blur lg:block">{sidebar}</aside>
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-72 animate-slide-in border-r border-border bg-card">{sidebar}</aside>
         </div>
       )}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur lg:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen((o) => !o)} aria-label="Menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</Button>
           <div className="lg:hidden"><Logo /></div>
@@ -115,7 +117,7 @@ export function Layout() {
             Google authorization expired or was revoked, so sending is on hold. <NavLink className="font-medium underline" to="/settings/account">Reconnect Gmail</NavLink>
           </div>
         )}
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8"><Outlet /></main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8"><PageTransition><Outlet /></PageTransition></main>
       </div>
     </div>
   );

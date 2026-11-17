@@ -40,7 +40,7 @@ Row Level Security means every route only ever sees the caller's own data. Limit
 | `PUT /api/campaigns/:id` | partial campaign | drafts only; `recipients` replaces the list |
 | `POST /api/campaigns/:id/start` | `{start_at?}` | `scheduled` if in the future |
 | `POST /api/campaigns/:id/pause\|resume\|cancel\|duplicate` | | |
-| `DELETE /api/campaigns/:id` | | drafts only |
+| `DELETE /api/campaigns/:id` | | draft, completed, cancelled or failed campaigns (cancel a running one first); removes its recipients, history and pending follow-ups, keeps suppression entries |
 | `POST /api/campaigns/:id/followups` | `{enabled}` | disabling cancels queued follow-ups |
 | `POST /api/campaigns/:id/retry-failed` | | re-queues `transient_exhausted` jobs |
 | `GET /api/campaigns/:id/recipients?filter&search&sort&dir&limit&offset` | | filters: `all pending queued sent opened not_opened clicked replied no_reply bounced unsubscribed failed skipped` |

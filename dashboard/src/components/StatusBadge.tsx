@@ -6,5 +6,6 @@ const TONES: Record<string, Parameters<typeof Badge>[0]['tone']> = {
   reauth_required: 'amber', disconnected: 'neutral', error: 'red', ambiguous: 'amber',
 };
 export function StatusBadge({ status }: { status: string }) {
-  return <Badge tone={TONES[status] ?? 'neutral'} className="capitalize">{status.replace(/_/g, ' ')}</Badge>;
+  const live = status === 'running' || status === 'active';
+  return <Badge tone={TONES[status] ?? 'neutral'} className="capitalize">{live && <span className="dot-pulse" />}{status.replace(/_/g, ' ')}</Badge>;
 }

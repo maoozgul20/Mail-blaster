@@ -26,9 +26,10 @@ export function App({ mode }: { mode: 'popup' | 'options' }) {
   }
 
   return (
-    <div className="mb" style={{ width: mode === 'popup' ? 340 : 'auto', maxWidth: 520, margin: mode === 'options' ? '32px auto' : 0, padding: 14, background: '#0f1426', minHeight: mode === 'popup' ? 0 : '100vh' }}>
+    <div className="mb" style={{ width: mode === 'popup' ? 340 : 'auto', maxWidth: 520, margin: mode === 'options' ? '32px auto' : 0, padding: 0, background: 'linear-gradient(180deg,#10162c,#0b1020)', minHeight: mode === 'popup' ? 0 : '100vh', borderRadius: mode === 'options' ? 16 : 0, overflow: 'hidden', border: mode === 'options' ? '1px solid #2f3a66' : 0, animation: 'reveal .35s ease both' }}>
       <style>{CSS}</style>
-      <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>✉ MailBlaster AI</h2>
+      <div className="hdr" style={{ padding: '16px 18px', fontSize: 17 }}>✉ MailBlaster AI<span className="sp" /><span className="pill" style={{ background: 'rgba(255,255,255,.18)', color: '#fff', borderColor: 'rgba(255,255,255,.35)' }}>{mode === 'popup' ? 'Gmail extension' : 'Settings'}</span></div>
+      <div style={{ padding: 16 }}>
       {!st ? <p className="muted">Loading…</p> : st.signedIn ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p>Signed in as <b>{st.email}</b></p>
@@ -47,6 +48,7 @@ export function App({ mode }: { mode: 'popup' | 'options' }) {
           {note && <div className="msg i">{note}</div>}
         </div>
       )}
+      </div>
     </div>
   );
 }

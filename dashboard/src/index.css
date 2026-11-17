@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    --background: 226 42% 7%;
+    --background: 232 46% 6%;
     --foreground: 220 25% 94%;
-    --card: 228 30% 11%;
+    --card: 232 34% 10%;
     --card-foreground: 220 25% 94%;
     --muted: 228 26% 15%;
     --muted-foreground: 224 14% 66%;
     --border: 228 24% 20%;
     --input: 228 24% 22%;
-    --primary: 239 84% 67%;
+    --primary: 244 88% 68%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 262 70% 62%;
+    --secondary: 270 80% 66%;
     --secondary-foreground: 0 0% 100%;
     --accent: 228 28% 17%;
     --accent-foreground: 220 25% 94%;
@@ -36,8 +36,9 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(900px 500px at 8% -10%, hsl(239 84% 67% / .14), transparent 60%),
-      radial-gradient(700px 420px at 100% 0%, hsl(262 70% 62% / .10), transparent 60%);
+      radial-gradient(900px 500px at 8% -10%, hsl(244 88% 68% / .16), transparent 60%),
+      radial-gradient(700px 420px at 100% 0%, hsl(290 80% 62% / .12), transparent 60%),
+      radial-gradient(600px 400px at 50% 110%, hsl(190 90% 50% / .07), transparent 60%);
     background-attachment: fixed;
   }
   ::selection { background: hsl(var(--primary) / .35); }
@@ -49,9 +50,34 @@
 @layer components {
   .glass { @apply bg-white/[0.035] backdrop-blur-md border border-white/10 shadow-[0_8px_30px_rgb(0_0_0/0.25)]; }
   .gradient-text { @apply bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent; }
-  .gradient-bg { background-image: linear-gradient(135deg, hsl(239 84% 62%), hsl(268 72% 58%)); }
+  .gradient-bg { background-image: linear-gradient(120deg, hsl(236 88% 62%), hsl(268 80% 60%), hsl(300 76% 58%), hsl(236 88% 62%)); background-size: 220% 100%; animation: gradient-pan 9s ease infinite; }
+  .gradient-text { background-size: 200% 100%; animation: gradient-pan 7s ease infinite; }
+  .lift { transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s, box-shadow .22s; }
+  .lift:hover { transform: translateY(-3px); border-color: hsl(244 88% 68% / .45); box-shadow: 0 14px 40px -12px hsl(244 88% 60% / .45); }
+  .progress-shimmer::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .35), transparent); background-size: 200% 100%; animation: shimmer 1.8s linear infinite; }
+  .dot-pulse { width: .5rem; height: .5rem; border-radius: 9999px; background: currentColor; animation: pulse-ring 1.8s ease-out infinite; }
+  .stagger > * { animation: fade-in .5s cubic-bezier(.2,.7,.2,1) backwards; }
+  .stagger > *:nth-child(1) { animation-delay: .02s } .stagger > *:nth-child(2) { animation-delay: .06s } .stagger > *:nth-child(3) { animation-delay: .10s }
+  .stagger > *:nth-child(4) { animation-delay: .14s } .stagger > *:nth-child(5) { animation-delay: .18s } .stagger > *:nth-child(6) { animation-delay: .22s }
+  .stagger > *:nth-child(7) { animation-delay: .26s } .stagger > *:nth-child(8) { animation-delay: .30s } .stagger > *:nth-child(9) { animation-delay: .34s }
+  .stagger > *:nth-child(10) { animation-delay: .38s } .stagger > *:nth-child(11) { animation-delay: .42s } .stagger > *:nth-child(12) { animation-delay: .46s }
+  .orbs { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  .orb { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .32; will-change: transform; }
+  .orb.a { width: 520px; height: 520px; left: -140px; top: -120px; background: #4f46e5; animation: float-a 22s ease-in-out infinite; }
+  .orb.b { width: 460px; height: 460px; right: -120px; top: 18%; background: #a21caf; animation: float-b 26s ease-in-out infinite; }
+  .orb.c { width: 420px; height: 420px; left: 30%; bottom: -160px; background: #0891b2; opacity: .22; animation: float-a 30s ease-in-out infinite reverse; }
   .editor-content { @apply min-h-[220px] rounded-b-md bg-white px-4 py-3 text-[15px] text-slate-900 outline-none; }
   .editor-content a { @apply text-blue-600 underline; }
   .editor-content ul { @apply list-disc pl-6; }
   .editor-content ol { @apply list-decimal pl-6; }
+}
+
+@keyframes float-a { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(60px,-40px,0) scale(1.15); } }
+@keyframes float-b { 0%,100% { transform: translate3d(0,0,0) scale(1.1); } 50% { transform: translate3d(-70px,50px,0) scale(.95); } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes gradient-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 currentColor; opacity: 1; } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }

@@ -17,7 +17,7 @@ const get = async (path) => (await fetch(API + path)).json();
   const problems = [];
   page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon|Failed to load resource.*(401|404)/.test(m.text())) problems.push(`console: ${m.text()}`); });
-  const step = async (name, fn) => { try { await fn(); console.log('  ✓', name); } catch (e) { console.log('  ✗', name, '\n   ', e.message.split('\n')[0]); await page.screenshot({ path: `${SHOTS}/FAIL-${name.replace(/\W+/g, '_')}.png` }); throw e; } };
+  const step = async (name, fn) => { try { await fn(); console.log('  ✓', name); } catch (e) { console.log('  ✗', name, '\n   ', e.message.split('\n')[0]); await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/FAIL-${name.replace(/\W+/g, '_')}.png` }); throw e; } };
 
   const email = `e2e${Date.now()}@test.dev`;
 
@@ -30,7 +30,7 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByRole('heading', { name: 'Overview' }).waitFor();
     await page.getByText('Campaigns', { exact: true }).first().waitFor();
     assert.equal(await page.getByText('Connected', { exact: true }).count() >= 1, true);
-    await page.screenshot({ path: `${SHOTS}/01-overview-empty.png` });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/01-overview-empty.png` });
   });
 
   await step('build a campaign: paste recipients, validate, write message', async () => {
@@ -52,7 +52,7 @@ const get = async (path) => (await fetch(API + path)).json();
     // live preview renders per recipient
     const frame = page.frameLocator('iframe[title="Email preview"]').first();
     await frame.getByText('Hi there, I enjoy your work', { exact: false }).waitFor(); // pasted address without a name -> fallback
-    await page.screenshot({ path: `${SHOTS}/02-new-campaign.png`, fullPage: true });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/02-new-campaign.png`, fullPage: true });
   });
 
   await step('schedule options render (presets, speed, business hours)', async () => {
@@ -77,7 +77,7 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByRole('button', { name: 'Start sending' }).click();
     await page.waitForURL(/\/campaigns\/[0-9a-f-]{36}$/, { timeout: 15000 });
     await page.getByText('Total recipients').waitFor();
-    await page.screenshot({ path: `${SHOTS}/03-campaign-queued.png`, fullPage: true });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/03-campaign-queued.png`, fullPage: true });
   });
 
   await step('cloud scheduler sends ONE email, then waits the random gap', async () => {
@@ -93,7 +93,7 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByText('Pending').first().waitFor();
     // pending vs sent are shown distinctly in the table
     await page.getByRole('table').getByText('Pending', { exact: true }).first().waitFor();
-    await page.screenshot({ path: `${SHOTS}/04-campaign-running.png`, fullPage: true });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/04-campaign-running.png`, fullPage: true });
     await post('/__tick', { seconds: 1300 });
     await post('/__tick', { seconds: 1300 });
     sent = (await get('/__sent'));
@@ -133,7 +133,7 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByRole('table').getByText(sent[1].to).waitFor();
     await page.getByRole('table').getByText(sent[1].to).click();
     await page.getByText('Yes please, tell me more').waitFor();
-    await page.screenshot({ path: `${SHOTS}/05-recipient-detail.png` });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/05-recipient-detail.png` });
     await page.keyboard.press('Escape');
   });
 
@@ -141,7 +141,7 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByRole('link', { name: 'Campaigns', exact: true }).first().click();
     await page.getByRole('heading', { name: 'Campaigns' }).waitFor();
     await page.getByRole('link', { name: 'E2E outreach' }).waitFor();
-    await page.screenshot({ path: `${SHOTS}/06-campaign-list.png` });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/06-campaign-list.png` });
     page.once('dialog', (d) => d.accept());
     await page.getByRole('button', { name: 'Duplicate' }).first().click();
     await page.getByRole('heading', { name: 'Edit draft' }).waitFor();
@@ -152,7 +152,7 @@ const get = async (path) => (await fetch(API + path)).json();
     for (const [path, title] of pages) {
       await page.goto(APP + path);
       await page.getByRole('heading', { name: title, exact: true }).first().waitFor();
-      await page.screenshot({ path: `${SHOTS}/page-${title.replace(/\W+/g, '_')}.png`, fullPage: path === '/' });
+      await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/page-${title.replace(/\W+/g, '_')}.png`, fullPage: path === '/' });
     }
     // overview is now populated from PostgreSQL
     await page.goto(APP + '/');
@@ -172,6 +172,20 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByRole('cell', { name: 'blocked@example.com', exact: true }).waitFor();
   });
 
+  await step('delete a finished campaign from the list (and cascade)', async () => {
+    await page.goto(APP + '/campaigns');
+    await page.getByRole('link', { name: 'E2E outreach', exact: true }).waitFor();
+    const row = page.getByRole('row').filter({ has: page.getByRole('link', { name: 'E2E outreach', exact: true }) });
+    await row.getByRole('button', { name: 'Delete campaign' }).waitFor();
+    page.removeAllListeners('dialog');
+    page.once('dialog', (d) => d.accept());
+    await row.getByRole('button', { name: 'Delete campaign' }).click();
+    await page.getByText('Campaign deleted').waitFor();
+    await page.getByRole('link', { name: 'E2E outreach', exact: true }).waitFor({ state: 'detached' });
+    const left = await post('/__sql', { sql: "select count(*)::int n from public.campaigns where name = 'E2E outreach'" });
+    assert.equal(left[0].n, 0);
+  });
+
   await step('mobile layout has no horizontal overflow', async () => {
     await page.setViewportSize({ width: 390, height: 800 });
     for (const path of ['/', '/campaigns', '/campaigns/new']) {
@@ -180,7 +194,7 @@ const get = async (path) => (await fetch(API + path)).json();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert.ok(overflow <= 1, `${path} overflows by ${overflow}px`);
     }
-    await page.screenshot({ path: `${SHOTS}/07-mobile.png` });
+    await page.waitForTimeout(1000); await page.screenshot({ path: `${SHOTS}/07-mobile.png` });
   });
 
   await browser.close();

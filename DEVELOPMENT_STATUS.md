@@ -18,6 +18,13 @@ _Last updated: 2026-11-17 · Branch `claude/clever-albattani-1l9evk`_
 
 Bugs found *by* these tests and fixed during development include: RLS check not seeing rows from the same statement (contact import into a group), Zod errors surfacing as HTTP 500, CORS guard rejecting the extension's `chrome-extension://` origin, a dialog animation that overrode centering, icon components invoked as functions on the login page, unlabeled form fields, OAuth redirect echoing a non-lower-cased email.
 
+## Latest changes
+
+* Removed testing-only features (test-email buttons/endpoint, fake sample rows).
+* Finished campaigns can be deleted (single and multi-select) via migration `0007_delete_campaigns.sql`.
+* Extension: create an account from the options page and the Gmail panel sign-in.
+* Animated UI (page transitions, staggered cards, count-up numbers, animated gradients; respects reduced-motion) and a richer colour palette in the dashboard and extension.
+
 ## Feature matrix
 
 ✅ implemented and tested · 🟡 implemented, limited as noted · ⛔ not implemented

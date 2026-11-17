@@ -7,12 +7,18 @@ import { Alert, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Pa
 import { StatusBadge } from '@/components/StatusBadge';
 import { CampaignBars, DailyChart, SERIES } from '@/components/charts';
 import { fmtDate, fmtNum, timeAgo } from '@/lib/utils';
+import { CountUp } from '@/components/motion';
 
-function Stat({ icon: Icon, label, value, sub, tone = 'text-primary' }: { icon: any; label: string; value: string; sub?: string; tone?: string }) {
+const CHIP: Record<string, string> = {
+  'text-primary': 'bg-indigo-500/15 text-indigo-300', 'text-sky-400': 'bg-sky-500/15 text-sky-300', 'text-amber-400': 'bg-amber-500/15 text-amber-300',
+  'text-emerald-400': 'bg-emerald-500/15 text-emerald-300', 'text-cyan-300': 'bg-cyan-500/15 text-cyan-300', 'text-violet-400': 'bg-violet-500/15 text-violet-300',
+  'text-orange-400': 'bg-orange-500/15 text-orange-300', 'text-rose-400': 'bg-rose-500/15 text-rose-300', 'text-muted-foreground': 'bg-white/10 text-slate-300',
+};
+function Stat({ icon: Icon, label, value, sub, tone = 'text-primary', raw }: { icon: any; label: string; value: number | string; sub?: string; tone?: string; raw?: boolean }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between"><span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span><Icon className={`h-4 w-4 ${tone}`} /></div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+    <Card className="lift p-4">
+      <div className="flex items-center justify-between"><span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span><span className={`grid h-8 w-8 place-items-center rounded-lg ${CHIP[tone] ?? CHIP['text-primary']}`}><Icon className="h-4 w-4" /></span></div>
+      <p className="mt-2 text-2xl font-semibold tabular-nums">{typeof value === 'number' && !raw ? <CountUp value={value} /> : value}</p>
       {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
     </Card>
   );
@@ -38,19 +44,19 @@ export default function Overview() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-            <Stat icon={FolderOpen} label="Campaigns" value={fmtNum(d.totals.campaigns)} />
-            <Stat icon={Users} label="Recipients" value={fmtNum(d.totals.recipients)} />
-            <Stat icon={Send} label="Sent" value={fmtNum(d.totals.sent)} tone="text-sky-400" />
-            <Stat icon={Hourglass} label="Pending" value={fmtNum(d.totals.pending)} sub="queued, not yet sent" tone="text-amber-400" />
-            <Stat icon={Eye} label="Opened" value={fmtNum(d.totals.opened)} sub={d.rates.open_rate != null ? `${d.rates.open_rate}% open rate*` : 'Not available yet'} tone="text-emerald-400" />
-            <Stat icon={MousePointerClick} label="Clicked" value={fmtNum(d.totals.clicked)} sub={d.rates.click_rate != null ? `${d.rates.click_rate}%` : undefined} tone="text-cyan-300" />
-            <Stat icon={Reply} label="Replied" value={fmtNum(d.totals.replied)} sub={d.rates.reply_rate != null ? `${d.rates.reply_rate}% reply rate` : undefined} tone="text-violet-400" />
-            <Stat icon={MailX} label="Bounced" value={fmtNum(d.totals.bounced)} tone="text-orange-400" />
-            <Stat icon={AlertTriangle} label="Failed" value={fmtNum(d.totals.failed)} tone="text-rose-400" />
-            <Stat icon={SkipForward} label="Skipped" value={fmtNum(d.totals.skipped)} tone="text-muted-foreground" />
-            <Stat icon={Ban} label="Unsubscribed" value={fmtNum(d.totals.unsubscribed)} tone="text-amber-400" />
-            <Stat icon={MailCheck} label="Contacts" value={fmtNum(d.totals.contacts)} sub={`${fmtNum(d.totals.suppressed)} suppressed`} />
+          <div className="stagger grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+            <Stat icon={FolderOpen} label="Campaigns" value={d.totals.campaigns ?? 0} />
+            <Stat icon={Users} label="Recipients" value={d.totals.recipients ?? 0} />
+            <Stat icon={Send} label="Sent" value={d.totals.sent ?? 0} tone="text-sky-400" />
+            <Stat icon={Hourglass} label="Pending" value={d.totals.pending ?? 0} sub="queued, not yet sent" tone="text-amber-400" />
+            <Stat icon={Eye} label="Opened" value={d.totals.opened ?? 0} sub={d.rates.open_rate != null ? `${d.rates.open_rate}% open rate*` : 'Not available yet'} tone="text-emerald-400" />
+            <Stat icon={MousePointerClick} label="Clicked" value={d.totals.clicked ?? 0} sub={d.rates.click_rate != null ? `${d.rates.click_rate}%` : undefined} tone="text-cyan-300" />
+            <Stat icon={Reply} label="Replied" value={d.totals.replied ?? 0} sub={d.rates.reply_rate != null ? `${d.rates.reply_rate}% reply rate` : undefined} tone="text-violet-400" />
+            <Stat icon={MailX} label="Bounced" value={d.totals.bounced ?? 0} tone="text-orange-400" />
+            <Stat icon={AlertTriangle} label="Failed" value={d.totals.failed ?? 0} tone="text-rose-400" />
+            <Stat icon={SkipForward} label="Skipped" value={d.totals.skipped ?? 0} tone="text-muted-foreground" />
+            <Stat icon={Ban} label="Unsubscribed" value={d.totals.unsubscribed ?? 0} tone="text-amber-400" />
+            <Stat icon={MailCheck} label="Contacts" value={d.totals.contacts ?? 0} sub={`${fmtNum(d.totals.suppressed)} suppressed`} />
           </div>
           <p className="-mt-3 text-xs text-muted-foreground">*Open tracking uses an invisible pixel. Image blocking, privacy proxies and security scanners make opens approximate; replies need the optional Gmail read permission.</p>
 

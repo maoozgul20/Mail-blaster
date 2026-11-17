@@ -49,8 +49,8 @@ export function coreRoutes(app: Hono<AppEnv>) {
   app.post('/api/auth/signup', async (c) => {
     if ((c.env as any).ALLOW_SIGNUPS === 'false') throw new HttpError(403, 'Sign-ups are disabled on this deployment');
     await limit(c, `signup:${clientIp(c)}`, 3600, 10);
-    const b = await body(c, cred.extend({ full_name: z.string().max(200).optional() }));
-    const r = await c.get('deps').auth(c.env).signUp(b.email.toLowerCase(), b.password, b.full_name);
+    const b = await body(c, cred.extend({ full_name: z.string().max(200).nullish() }));
+    const r = await c.get('deps').auth(c.env).signUp(b.email.toLowerCase(), b.password, b.full_name ?? undefined);
     return c.json({ user: r.user, session: r.session, needs_confirmation: !r.session });
   });
   app.post('/api/auth/login', async (c) => {
