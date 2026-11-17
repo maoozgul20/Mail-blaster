@@ -40,7 +40,18 @@ export interface Deps {
   attachmentLoader(env: Env): (a: { name: string; path: string; type: string }, userId: string) => Promise<MimeAttachment>;
 }
 
-const noPersist = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
+/**
+ * Supabase's newer API keys (sb_publishable_… / sb_secret_…) are NOT JWTs and belong only in the `apikey` header.
+ * supabase-js also sends the key as `Authorization: Bearer`, which the gateway can reject for non-JWT keys, so strip it then.
+ * Legacy anon/service_role JWT keys and user JWTs are left untouched.
+ */
+export const keyAwareFetch: typeof fetch = (input, init) => {
+  const h = new Headers(init?.headers);
+  if ((h.get('authorization') ?? '').replace(/^Bearer\s+/i, '').startsWith('sb_')) h.delete('authorization');
+  return fetch(input, { ...init, headers: h });
+};
+
+const noPersist = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { fetch: keyAwareFetch } };
 
 const service = (env: Env): SupabaseClient => createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, noPersist);
 
@@ -61,7 +72,7 @@ export const productionDeps: Deps = {
     };
   },
   userDb: (env, token) =>
-    createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { ...noPersist, global: { headers: { Authorization: `Bearer ${token}` } } }) as unknown as UserDb,
+    createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { ...noPersist, global: { fetch: keyAwareFetch, headers: { Authorization: `Bearer ${token}` } } }) as unknown as UserDb,
   auth: (env) => {
     const anon = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, noPersist);
     const admin = service(env);

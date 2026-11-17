@@ -7,6 +7,7 @@ import type { Deps } from '../src/deps';
 import type { Env } from '../src/env';
 import { signedClickUrl } from '../src/render';
 import { getAccessToken, ReauthRequired } from '../src/tokens';
+import { keyAwareFetch } from '../src/deps';
 import { decryptSecret, encryptSecret, GMAIL_READ_SCOPE, GMAIL_SEND_SCOPE, SHEETS_SCOPE, utf8ToB64Url } from '@mailblaster/shared';
 
 const KEY = Buffer.alloc(32, 5).toString('base64');
@@ -559,5 +560,16 @@ describe('test email, attachments, sheets, export & deletion', () => {
     expect((await h.call(s.user, 'DELETE', '/api/account', { confirm: 'DELETE' })).json.ok).toBe(true);
     expect(h.deleted).toEqual([s.user]);
     expect(h.files.size).toBe(0);
+  });
+});
+
+describe('Supabase key styles', () => {
+  it('strips Authorization only when it carries a new-style sb_ key (never user JWTs or legacy JWT keys)', async () => {
+    const seen: (string | null)[] = [];
+    vi.stubGlobal('fetch', async (_u: string, init: RequestInit) => { seen.push(new Headers(init.headers).get('authorization')); return new Response('{}'); });
+    await keyAwareFetch('https://x', { headers: { apikey: 'sb_secret_abc', authorization: 'Bearer sb_secret_abc' } });
+    await keyAwareFetch('https://x', { headers: { apikey: 'sb_publishable_abc', authorization: 'Bearer eyJ.user.jwt' } });
+    await keyAwareFetch('https://x', { headers: { apikey: 'eyJ.legacy', authorization: 'Bearer eyJ.legacy' } });
+    expect(seen).toEqual([null, 'Bearer eyJ.user.jwt', 'Bearer eyJ.legacy']);
   });
 });

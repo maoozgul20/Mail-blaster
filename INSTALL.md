@@ -37,8 +37,9 @@ Double-click **`INSTALL.bat`**. It installs dependencies and creates `.env` from
 1. Sign up at <https://supabase.com> → **New project** (choose the **Free** plan, a region near you, and a strong database password, which you will not need again).
 2. When it finishes: **Project Settings → API**. Copy into `.env`:
    * `SUPABASE_URL` = *Project URL*
-   * `SUPABASE_ANON_KEY` = *anon public* key
-   * `SUPABASE_SERVICE_ROLE_KEY` = *service_role* key (**secret**: only the Worker uses it)
+   * `SUPABASE_ANON_KEY` = the *anon public* key, **or the new "Publishable key"** (`sb_publishable_…`)
+   * `SUPABASE_SERVICE_ROLE_KEY` = the *service_role* key, **or the new "Secret key"** (`sb_secret_…`) (**secret**: only the Worker uses it)
+   * (Supabase renamed the keys: both styles are supported. If your dashboard has an *API Keys* page with a *Legacy API keys* tab, either works.)
 3. **SQL Editor → New query**: open `supabase/all_migrations.sql` from this repo in Notepad, copy everything, paste, **Run**. It should end with *Success*. (It creates all 21+ tables, Row Level Security, the queue functions, the private attachments bucket and realtime.)
 4. **Authentication → Providers → Email**: for a personal install you can switch off *Confirm email* so you can sign in immediately. If you leave it on, click the confirmation email first.
 5. After the dashboard is deployed (step 8) set **Authentication → URL Configuration → Site URL** to your dashboard URL.
