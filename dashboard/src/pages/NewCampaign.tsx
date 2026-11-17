@@ -5,7 +5,7 @@ import { CheckCircle2, Paperclip, Rocket, Save, Send, X } from 'lucide-react';
 import { GMAIL_COMPOSE_SCOPE, localInputToUtc, estimateDuration, findUnresolvedVariables, availableVariables, type Attachment, type CampaignSettings, type FollowUpStepInput, type RecipientInput, type SchedulePresetId } from '@mailblaster/shared';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Alert, Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, Field, Input, PageHeader, Select, Skeleton, Switch } from '@/components/ui';
+import { Alert, Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, Field, Input, PageHeader, Select, Skeleton, Switch, Textarea } from '@/components/ui';
 import { errMsg, useToast } from '@/components/toast';
 import { RichEditor } from '@/components/composer/RichEditor';
 import { EmailPreview } from '@/components/composer/EmailPreview';
@@ -37,6 +37,7 @@ export default function NewCampaign() {
   const [name, setName] = React.useState('');
   const [subject, setSubject] = React.useState('');
   const [html, setHtml] = React.useState('<p>Hi {{FirstName|there}},</p><p></p><p>Best regards</p>');
+  const [bodyText, setBodyText] = React.useState('');
   const [recipients, setRecipients] = React.useState<RecipientInput[]>([]);
   const [recipientsDirty, setRecipientsDirty] = React.useState(false);
   const [savedCount, setSavedCount] = React.useState(0);
@@ -72,7 +73,7 @@ export default function NewCampaign() {
     if (!routeId) return;
     api.getCampaign(routeId).then((c) => {
       if (c.status !== 'draft') { toast.error('Only drafts can be edited'); nav(`/campaigns/${routeId}`, { replace: true }); return; }
-      setName(c.name); setSubject(c.subject); setHtml(c.body_html || ''); setAccountId(c.account_id ?? ''); setDelivery(c.delivery_mode);
+      setName(c.name); setSubject(c.subject); setHtml(c.body_html || ''); setBodyText(c.body_text ?? ''); setAccountId(c.account_id ?? ''); setDelivery(c.delivery_mode);
       setSettings((p) => ({ ...p, ...c.settings })); setAttachments(c.attachments ?? []); setFollowOn(c.follow_ups.enabled);
       if (c.follow_ups.steps.length) setSteps(c.follow_ups.steps.map((x: any) => ({ enabled: x.enabled, delay_days: x.delay_days, condition: x.condition, subject: x.subject, body_html: x.body_html, reply_in_thread: x.reply_in_thread })));
       setSavedCount(c.stats.total); setTemplateId(c.template_id ?? '');
@@ -82,7 +83,7 @@ export default function NewCampaign() {
   }, [routeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payload = (includeRecipients: boolean) => ({
-    name: name.trim() || 'Untitled campaign', subject, body_html: html, account_id: accountId || null, template_id: templateId || null, delivery_mode: delivery,
+    name: name.trim() || 'Untitled campaign', subject, body_html: html, body_text: bodyText.trim() ? bodyText : null, account_id: accountId || null, template_id: templateId || null, delivery_mode: delivery,
     settings, attachments, follow_ups: { enabled: followOn, steps },
     end_at: endAt ? localInputToUtc(endAt, settings.timezone)?.toISOString() ?? null : null,
     ...(includeRecipients ? { recipients } : {}),
@@ -109,7 +110,7 @@ export default function NewCampaign() {
     if (!dirty || !loaded || !name.trim()) return;
     const t = setTimeout(() => saveRef.current(true), 3000);
     return () => clearTimeout(t);
-  }, [dirty, loaded, name, subject, html, recipients, steps, settings, attachments, followOn, endAt, delivery, accountId]);
+  }, [dirty, loaded, name, subject, html, bodyText, recipients, steps, settings, attachments, followOn, endAt, delivery, accountId]);
 
   const variables = React.useMemo(() => availableVariables(recipients), [recipients]);
   const unresolved = React.useMemo(() => findUnresolvedVariables(`${subject} ${html}`, recipients), [subject, html, recipients]);
@@ -192,6 +193,11 @@ export default function NewCampaign() {
                 <span className="text-xs text-muted-foreground">Max 3 files, 2 MB total (PDF, images, Office, TXT, CSV).</span>
                 <Button type="button" variant="ghost" size="sm" className="ml-auto" onClick={saveAsTemplate}>Save as template</Button>
               </div>
+              <details className="rounded-md border border-border/60 px-3 py-2 text-sm">
+                <summary className="cursor-pointer text-muted-foreground">Plain-text version (optional)</summary>
+                <Textarea className="mt-2 font-mono text-xs" rows={5} value={bodyText} onChange={(e) => touch(setBodyText)(e.target.value)} placeholder="Leave empty to generate it automatically from the HTML" aria-label="Plain-text alternative" />
+                <p className="mt-1 text-xs text-muted-foreground">Sent as the text/plain part of every email. Merge tags work here too.</p>
+              </details>
               {me?.settings.signature_html ? <p className="text-xs text-muted-foreground">Your saved signature is appended automatically.</p> : <p className="text-xs text-muted-foreground">Tip: add a signature in Settings and it is appended to every email.</p>}
               {unresolved.length > 0 && recipients.length > 0 && <Alert tone="warn">No recipient has a value for {unresolved.map((u) => `{{${u}}}`).join(', ')}. Add a fallback like {'{{FirstName|there}}'} or map that column.</Alert>}
               <AiAssistant subject={subject} html={html} onApply={(r) => { if (r.subject !== undefined) touch(setSubject)(r.subject); if (r.html !== undefined) touch(setHtml)(r.html); }} />
