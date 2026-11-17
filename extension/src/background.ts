@@ -3,7 +3,7 @@ import { getConfig, getSession, setSession, type BgRequest, type BgResponse } fr
 
 const ALLOWED = new Set([
   'login', 'signup', 'logout', 'me', 'accounts', 'listCampaigns', 'createCampaign', 'getCampaign', 'updateCampaign', 'startCampaign', 'campaignAction',
-  'templates', 'createTemplate', 'testEmail', 'checkSuppressed', 'sheetsInfo', 'sheetsValues', 'groups', 'groupContacts', 'contacts', 'overview',
+  'templates', 'createTemplate', 'checkSuppressed', 'sheetsInfo', 'sheetsValues', 'groups', 'groupContacts', 'contacts', 'overview',
 ]);
 
 async function handle(req: BgRequest): Promise<BgResponse> {

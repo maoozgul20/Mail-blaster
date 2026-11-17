@@ -127,9 +127,6 @@ export class ApiClient {
   updateAccount(id: string, patch: { max_concurrent: number }) { return this.request('PATCH', `/api/accounts/${id}`, patch); }
   deleteAccount() { return this.request('DELETE', '/api/account', { confirm: 'DELETE' }); }
   exportData() { return this.request<Response>('GET', '/api/account/export', undefined, { raw: true }); }
-  testEmail(b: { account_id?: string; subject: string; body_html: string; to?: string; recipient?: Record<string, unknown> }) {
-    return this.request<{ ok: boolean; to: string; missing_variables: string[] }>('POST', '/api/test-email', b);
-  }
 
   // ---- campaigns ----
   listCampaigns(p: { status?: string; search?: string; limit?: number; offset?: number } = {}) { return this.request<Paged<CampaignRow>>('GET', `/api/campaigns${this.q(p)}`); }

@@ -484,24 +484,7 @@ describe('tracking & unsubscribe endpoints', () => {
   });
 });
 
-describe('test email, attachments, sheets, export & deletion', () => {
-  it('test email goes only to the user own addresses, prefixed and untracked', async () => {
-    const s = await setup();
-    const h = harness(s);
-    const r = await h.call(s.user, 'POST', '/api/test-email', { subject: 'Hi {{FirstName}} {{Nope}}', body_html: '<p>Hello {{FirstName|there}}</p>', recipient: { first_name: 'Sam' } });
-    expect(r.status).toBe(200);
-    expect(r.json).toMatchObject({ ok: true, to: 'sender@gmail.test', missing_variables: ['Nope'] });
-    expect(h.gmail.sent).toHaveLength(1);
-    const m = h.gmail.sent[0].mail;
-    expect(m.headers.subject).toBe('[TEST] Hi Sam');
-    expect(m.html).toContain('Hello Sam');
-    expect(m.html).not.toContain('/t/o/');
-    expect((await h.call(s.user, 'POST', '/api/test-email', { subject: 's', body_html: 'x', to: 'victim@example.com' })).status).toBe(400);
-    expect(h.gmail.sent).toHaveLength(1);
-    h.gmail.failNext(MockGmail.http(403, 'dailyLimitExceeded', 'quota'));
-    expect((await h.call(s.user, 'POST', '/api/test-email', { subject: 's', body_html: 'x' })).status).toBe(502);
-  });
-
+describe('attachments, sheets, export & deletion', () => {
   it('attachments: allow-list, size cap, per-user paths, safe deletion', async () => {
     const s = await setup();
     const h = harness(s);

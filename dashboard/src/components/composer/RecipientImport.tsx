@@ -11,12 +11,6 @@ import { downloadBlob } from '@/lib/utils';
 
 interface Raw { headers: string[]; rows: Record<string, unknown>[]; source: string }
 
-const SAMPLE = [
-  { email: 'ali@example.com', first_name: 'Ali', company: 'Acme Digital', website: 'acme.example.com', fields: { Notes: 'Met at the SEO meetup' } },
-  { email: 'sara@example.com', first_name: 'Sara', company: 'Beta Media', website: 'betamedia.example.com', fields: { Notes: 'Sells guest posts' } },
-  { email: 'john@example.com', company: 'Gamma Ltd', website: 'gamma.example.com', fields: { Notes: 'No first name: {{FirstName|there}} says "there"' } },
-] satisfies RecipientInput[];
-
 function normaliseRows(table: unknown[][]): Raw['rows'] & { _h?: string[] } {
   const [head = [], ...rest] = table;
   const seen = new Map<string, number>();
@@ -143,7 +137,6 @@ export function RecipientImport({ value, onChange }: { value: RecipientInput[]; 
           </label>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => downloadBlob(new Blob(['Email,FirstName,LastName,Company,Website,Position,Notes\nali@example.com,Ali,Khan,Acme Digital,acme.example.com,Founder,Met at the SEO meetup\nsara@example.com,Sara,,Beta Media,betamedia.example.com,Editor,Sells guest posts\n'], { type: 'text/csv' }), 'mailblaster-sample.csv')}>Download sample CSV</Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => { onChange(SAMPLE); setRaw(null); }}>Try with sample rows</Button>
             {sheets.length > 1 && file && <Select className="h-8 w-48 text-xs" value={raw?.source.split(' › ')[1] ?? sheets[0]} onChange={(e) => parseFile(file, e.target.value)} aria-label="Worksheet">{sheets.map((s) => <option key={s}>{s}</option>)}</Select>}
           </div>
         </TabsContent>

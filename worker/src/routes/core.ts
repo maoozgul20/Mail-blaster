@@ -4,9 +4,6 @@ import { SCOPE_GROUPS, SHEETS_SCOPE, decryptSecret, type ScopeGroup } from '@mai
 import type { AppEnv } from '../app';
 import { HttpError, body, clientIp, unwrap } from '../http';
 import { buildAuthUrl, parseSpreadsheetId, revokeToken, scopesForGroups, sheetsInfo, sheetsValues } from '../google';
-import { renderEmail } from '../render';
-import { classifyError } from '../scheduler';
-import type { ClaimedJob } from '../types';
 import { signState } from './public';
 
 const validTz = (tz: string) => { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; } };
@@ -184,42 +181,6 @@ export function coreRoutes(app: Hono<AppEnv>) {
     if (!path.startsWith(`${c.get('user').id}/`) || path.includes('..')) throw new HttpError(403, 'Not allowed');
     await c.get('deps').storage(c.env).remove([path]);
     return c.json({ ok: true });
-  });
-
-  // ---------------- test email (to the connected account's own address only) ----------------
-  app.post('/api/test-email', async (c) => {
-    const u = c.get('user');
-    await limit(c, `test:${u.id}`, 3600, 20, 'Test email limit reached (20/hour)');
-    const b = await body(c, z.object({
-      account_id: z.string().uuid().optional(), subject: z.string().max(998), body_html: z.string().max(500_000),
-      to: z.string().email().optional(),
-      recipient: z.object({ first_name: z.string().optional(), last_name: z.string().optional(), company: z.string().optional(), website: z.string().optional(), position: z.string().optional(), fields: z.record(z.string(), z.string()).optional() }).optional(),
-    }));
-    const accounts = unwrap(await c.get('db').from('connected_accounts').select('id,email,display_name,status,scopes').eq('status', 'active')) as any[];
-    const acc = accounts.find((a) => !b.account_id || a.id === b.account_id);
-    if (!acc) throw new HttpError(400, 'Connect a Gmail account first');
-    const to = (b.to ?? acc.email).toLowerCase();
-    if (![acc.email.toLowerCase(), u.email.toLowerCase()].includes(to)) throw new HttpError(400, 'Test emails can only be sent to your own addresses');
-    const settings = unwrap(await c.get('db').from('user_settings').select('*').eq('user_id', u.id).maybeSingle()) ?? {};
-    const r = b.recipient ?? {};
-    const job: ClaimedJob = {
-      job: { id: `test-${crypto.randomUUID()}`, step_number: 0, attempts: 1, idempotency_key: 'test', worker: 'api', claimed_at: new Date().toISOString(), user_id: u.id },
-      account: { id: acc.id, email: acc.email, display_name: acc.display_name, scopes: acc.scopes },
-      campaign: { id: 'test', name: 'test', subject: b.subject, body_html: b.body_html, body_text: null, delivery_mode: 'send', settings: {}, attachments: [] },
-      recipient: { id: 'test', email: to, first_name: r.first_name ?? 'Test', last_name: r.last_name ?? 'Recipient', company: r.company ?? 'Example Co', website: r.website ?? 'example.com', position: r.position ?? null, fields: r.fields ?? {}, token: '0'.repeat(32) },
-      step: null, thread: null,
-      user_settings: { track_opens: false, track_clicks: false, unsubscribe_footer: false, unsubscribe_text: settings.unsubscribe_text ?? 'Unsubscribe', signature_html: settings.signature_html ?? '', tracking_disclosure: '' },
-    };
-    const rendered = await renderEmail(job, c.env, { test: true, testPrefix: '[TEST] ' });
-    const deps = c.get('deps');
-    try {
-      const token = await deps.accessToken(c.env, c.get('store'))(acc.id);
-      const sent = await deps.gmail(c.env).send(token, rendered.raw);
-      return c.json({ ok: true, to, id: sent.id, missing_variables: rendered.missing });
-    } catch (e) {
-      const v = classifyError(e);
-      throw new HttpError(502, v.kind === 'fail' ? v.message : v.message);
-    }
   });
 
   // ---------------- data export & account deletion ----------------

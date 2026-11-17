@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Paperclip, Rocket, Save, Send, X } from 'lucide-react';
+import { CheckCircle2, Paperclip, Rocket, Save, X } from 'lucide-react';
 import { GMAIL_COMPOSE_SCOPE, localInputToUtc, estimateDuration, findUnresolvedVariables, availableVariables, type Attachment, type CampaignSettings, type FollowUpStepInput, type RecipientInput, type SchedulePresetId } from '@mailblaster/shared';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -58,7 +58,6 @@ export default function NewCampaign() {
   const [saving, setSaving] = React.useState(false);
   const [confirm, setConfirm] = React.useState(false);
   const [launching, setLaunching] = React.useState(false);
-  const [testing, setTesting] = React.useState(false);
   const [error, setError] = React.useState('');
   const touch = <T,>(set: (v: T) => void) => (v: T) => { set(v); setDirty(true); };
 
@@ -137,10 +136,6 @@ export default function NewCampaign() {
     const n = prompt('Template name'); if (!n) return;
     try { await api.createTemplate({ name: n, subject, body_html: html, category: 'My templates' }); toast.success('Saved to your template library'); qc.invalidateQueries({ queryKey: ['templates'] }); } catch (e) { toast.error(errMsg(e)); }
   }
-  async function sendTest() {
-    setTesting(true);
-    try { const r = await api.testEmail({ account_id: accountId || undefined, subject, body_html: html, recipient: recipients[0] as any }); toast.success(`Test email sent to ${r.to}`); } catch (e) { toast.error(errMsg(e)); } finally { setTesting(false); }
-  }
   async function upload(files: FileList | null) {
     if (!files) return;
     for (const f of Array.from(files)) {
@@ -205,8 +200,6 @@ export default function NewCampaign() {
             <div><h4 className="mb-2 text-sm font-semibold">Preview</h4>
               <EmailPreview subject={subject} html={html} recipients={recipients} signature={me?.settings.signature_html}
                 stages={followOn ? steps.map((st, i) => ({ label: `Follow-up ${i + 1}`, subject: st.subject, html: st.body_html })) : []} />
-              <Button type="button" variant="outline" className="mt-3" loading={testing} disabled={!account || !subject} onClick={sendTest}><Send className="h-4 w-4" /> Send test email to myself</Button>
-              <p className="mt-1 text-xs text-muted-foreground">Goes only to your own address, marked “[TEST]”, with no tracking.</p>
             </div>
           </div>
         </Step>

@@ -25,7 +25,6 @@ Row Level Security means every route only ever sees the caller's own data. Limit
 | `GET /oauth/google/callback` | (Google redirect) | public; signed `state`; stores **encrypted** tokens; redirects to the dashboard |
 | `PATCH /api/accounts/:id` | `{max_concurrent 1–5}` | |
 | `DELETE /api/accounts/:id` | | revokes at Google, deletes tokens, pauses its campaigns |
-| `POST /api/test-email` | `{subject, body_html, account_id?, to?, recipient?}` | only to your own addresses; `[TEST]` prefix; 20/hour |
 | `GET /api/account/export` | | full JSON export, no tokens |
 | `DELETE /api/account` | `{confirm:"DELETE"}` | deletes everything + revokes Google |
 | `POST /api/sheets/info` / `/values` | `{spreadsheet}` / `{spreadsheetId, sheet}` | needs the optional Sheets permission |

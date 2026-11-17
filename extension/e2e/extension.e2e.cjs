@@ -133,16 +133,6 @@ const GMAIL = `<!doctype html><html><head><meta charset="utf-8"><title>Inbox - G
     await gmail.screenshot({ path: `${SHOTS}/ext-3-sections.png` });
   });
 
-  await step('test email goes to myself only', async () => {
-    const before = (await get('/__sent')).length;
-    await gmail.locator('details.sec').filter({ hasText: /^Message/ }).evaluate((d) => { d.open = true; });
-    await gmail.getByRole('button', { name: 'Send test to myself' }).click();
-    await gmail.getByText(/Test email sent to me@gmail.test/).waitFor();
-    const sent = await get('/__sent');
-    assert.equal(sent.length, before + 1);
-    assert.match(sent.at(-1).subject, /^\[TEST\]/);
-  });
-
   await step('Send campaign: one individual job per recipient, compose is discarded', async () => {
     await gmail.getByRole('button', { name: 'Send campaign' }).click();
     await gmail.getByText(/Campaign started: 3 individual emails/).waitFor();

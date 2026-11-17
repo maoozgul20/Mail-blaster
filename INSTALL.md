@@ -104,7 +104,7 @@ Because your Google app is in *Testing* mode you will see **“Google hasn't ver
 ## 10. Create your first campaign
 
 1. Dashboard → **New campaign**. For the first run use 2–3 **of your own addresses** (paste them in the *Paste / type* tab).
-2. Write the subject and body (try `Hi {{FirstName|there}}`), click **Send test email to myself** and check your inbox.
+2. Write the subject and body (try `Hi {{FirstName|there}}`) and check the live preview on the right.
 3. Leave the default pacing (10–20 min, 30/day), **Send campaign** → *Start sending*.
 4. Watch the campaign page: recipients move from *Queued* to *Sent* one at a time. You can close the browser and switch the PC off: the Cloudflare cron keeps going.
 5. In Gmail: click **Compose**; the **MailBlaster** button appears next to **Send**. Use its panel to import a CSV/Excel/Google Sheet or use the To field, set follow-ups and schedule, then **Send campaign** (never Gmail's own Send, which would send one message to everybody).

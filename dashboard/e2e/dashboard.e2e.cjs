@@ -67,13 +67,8 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.getByRole('button', { name: 'Now', exact: true }).click();
   });
 
-  await step('autosave creates a draft, test email works', async () => {
+  await step('autosave creates a draft', async () => {
     await page.waitForURL(/\/campaigns\/.+\/edit/, { timeout: 15000 });
-    await page.getByRole('button', { name: /Send test email/ }).click();
-    await page.getByText(/Test email sent to me@gmail.test/).waitFor();
-    const sent = await get('/__sent');
-    assert.equal(sent.length, 1);
-    assert.match(sent[0].subject, /^\[TEST\]/);
   });
 
   await step('launch the campaign', async () => {
@@ -90,7 +85,7 @@ const get = async (path) => (await fetch(API + path)).json();
     assert.equal(a.submitted, 1);
     const b = await post('/__tick', { seconds: 1 });
     assert.equal(b.claimed, 0, 'must not send a second email immediately');
-    let sent = (await get('/__sent')).filter((m) => !m.subject.startsWith('[TEST]'));
+    let sent = (await get('/__sent'));
     assert.equal(sent.length, 1);
     assert.equal((sent[0].to.match(/@/g) || []).length, 1, 'one recipient only');
     await page.reload();
@@ -101,7 +96,7 @@ const get = async (path) => (await fetch(API + path)).json();
     await page.screenshot({ path: `${SHOTS}/04-campaign-running.png`, fullPage: true });
     await post('/__tick', { seconds: 1300 });
     await post('/__tick', { seconds: 1300 });
-    sent = (await get('/__sent')).filter((m) => !m.subject.startsWith('[TEST]'));
+    sent = (await get('/__sent'));
     assert.equal(sent.length, 3);
     assert.equal(new Set(sent.map((m) => m.to)).size, 3);
     assert.ok(sent.some((m) => m.subject === 'Hello John at your company'), 'personalised subject from "John Smith <john@…>"');
@@ -109,7 +104,7 @@ const get = async (path) => (await fetch(API + path)).json();
   });
 
   await step('open tracking, click tracking and unsubscribe work from the real endpoints', async () => {
-    const sent = (await get('/__sent')).filter((m) => !m.subject.startsWith('[TEST]'));
+    const sent = (await get('/__sent'));
     const m = sent[0];
     const pixel = m.html.match(/http:\/\/localhost:8788\/t\/o\/[a-f0-9]{32}\.gif/)[0];
     const tracked = m.html.match(/http:\/\/localhost:8788\/t\/c\/[^"]+/)[0].replace(/&amp;/g, '&');
@@ -125,7 +120,7 @@ const get = async (path) => (await fetch(API + path)).json();
   });
 
   await step('reply detection updates the campaign', async () => {
-    const sent = (await get('/__sent')).filter((m) => !m.subject.startsWith('[TEST]'));
+    const sent = (await get('/__sent'));
     await post('/__reply', { threadId: sent[1].threadId, from: sent[1].to, snippet: 'Yes please, tell me more' });
     const inb = await post('/__inbound');
     assert.equal(inb.replies, 1);

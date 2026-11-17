@@ -123,13 +123,6 @@ export function Panel({ compose, onClose }: { compose: Compose; onClose: () => v
       await bg({ type: 'openTab', url: `/campaigns/${r.id}/edit` });
     } catch (e) { setMsg({ k: 'e', t: (e as Error).message }); } finally { setBusy(''); }
   }
-  async function sendTest() {
-    refreshCompose(); setBusy('test'); setMsg(null);
-    try {
-      const r = await call<{ to: string }>('testEmail', { account_id: account?.id, subject: readSubject(compose), body_html: sanitizeEmailHtml(readBodyHtml(compose)), recipient: analysis.valid[0] });
-      setMsg({ k: 's', t: `Test email sent to ${r.to}` });
-    } catch (e) { setMsg({ k: 'e', t: (e as Error).message }); } finally { setBusy(''); }
-  }
   async function findSheet() {
     setBusy('sheet'); try { setSheetInfo(await call('sheetsInfo', sheetUrl)); } catch (e) { setMsg({ k: 'e', t: (e as Error).message }); } finally { setBusy(''); }
   }
@@ -168,8 +161,7 @@ export function Panel({ compose, onClose }: { compose: Compose; onClose: () => v
               {analysis.duplicates.length > 0 && <span className="badge a">{analysis.duplicates.length} duplicates</span>}
               <span className="muted">{imported ? 'from import' : 'from the To field'}</span>
               <span style={{ flex: 1 }} /><button className="btn sm" onClick={() => { refreshCompose(); setImported(null); setRaw(null); }}>Use To field</button></div>
-            <div className="row"><label className="btn sm" style={{ margin: 0 }}>Upload CSV / Excel<input data-testid="file" type="file" accept=".csv,.tsv,.txt,.xlsx" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} /></label>
-              <button className="btn sm" onClick={() => setImported([{ email: 'ali@example.com', first_name: 'Ali', company: 'Acme Digital' }, { email: 'sara@example.com', first_name: 'Sara', company: 'Beta Media' }])}>Sample rows</button></div>
+            <div className="row"><label className="btn sm" style={{ margin: 0 }}>Upload CSV / Excel<input data-testid="file" type="file" accept=".csv,.tsv,.txt,.xlsx" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} /></label></div>
             <textarea aria-label="Paste email addresses" placeholder="Paste addresses (comma / new line)…" value={paste} onChange={(e) => setPaste(e.target.value)} style={{ minHeight: 44 }} />
             <div className="row"><button className="btn sm" disabled={!paste.trim()} onClick={() => { setImported([...(imported ?? []), ...parsePastedList(paste)]); setPaste(''); }}>Add pasted</button></div>
             <div className="row"><input className="grow" type="url" placeholder="Google Sheets URL" aria-label="Google Sheets URL" value={sheetUrl} onChange={(e) => setSheetUrl(e.target.value)} /><button className="btn sm" disabled={!sheetUrl || busy === 'sheet'} onClick={findSheet}>Find</button></div>
@@ -194,7 +186,6 @@ export function Panel({ compose, onClose }: { compose: Compose; onClose: () => v
               <select className="grow" aria-label="Preview recipient" value={prefIdx} onChange={(e) => setPrefIdx(+e.target.value)}>{analysis.valid.length ? analysis.valid.slice(0, 100).map((r, i) => <option key={r.email} value={i}>{r.email}</option>) : <option>(sample)</option>}</select></div>
             <div className="muted"><b>Subject:</b> {renderTemplate(stage === 0 ? subject : pv.subject, data).text || '(none)'}</div>
             <iframe className="frame" title="Email preview" sandbox="" srcDoc={previewDoc} />
-            <div className="row"><button className="btn sm" disabled={busy === 'test' || !account} onClick={sendTest}>{busy === 'test' ? 'Sending…' : 'Send test to myself'}</button></div>
           </Section>
 
           <Section title="Follow-ups" chip={followOn ? `${steps.filter((x) => x.enabled).length} stage(s)` : 'off'}>

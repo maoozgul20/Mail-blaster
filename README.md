@@ -33,7 +33,7 @@ campaigns **when your computer is off**, backed by a Supabase PostgreSQL queue.
 * **Tracking:** sent, opens (pixel), clicks (signed redirects, no open redirect), replies and bounces (optional Gmail read permission), failures. Unknown stays "Unknown / —", nothing is invented.
 * **Personalisation:** `{{FirstName}} {{LastName}} {{FullName}} {{Email}} {{Company}} {{Website}} {{Position}} {{CustomField1}} {{CustomField2}}`, any CSV column, and fallbacks `{{FirstName|there}}`. Values are HTML-escaped, so CSV data can't inject markup.
 * **Recipients:** paste, CSV, Excel (.xlsx), Google Sheets, saved contacts / groups / segments, duplicate + validation checks, suppression & unsubscribe exclusion, consent records.
-* **Composer:** rich text + HTML source, plain-text alternative, attachments, signature, templates, desktop/mobile preview, test email, auto-saved drafts. An optional AI writing helper works with *your own* free endpoint; the editor needs no AI.
+* **Composer:** rich text + HTML source, plain-text alternative, attachments, signature, templates, desktop/mobile preview, auto-saved drafts. An optional AI writing helper works with *your own* free endpoint; the editor needs no AI.
 * **Security:** official Google OAuth (no passwords), refresh tokens encrypted with AES-256-GCM, Row Level Security on every table, bearer-token API (no CSRF surface), CORS allow-list, rate limiting, signed OAuth state, input validation, audit entries, per-user storage prefixes.
 
 ## Quick start (Windows)
