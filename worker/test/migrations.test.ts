@@ -48,3 +48,22 @@ describe('single-file install (Supabase SQL Editor path)', () => {
     expect(r.rows[0].n).toBeGreaterThanOrEqual(22);
   });
 });
+
+describe('deploy script: wrangler.toml [vars] editing', () => {
+  const sample = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../wrangler.toml'), 'utf8');
+  const vars = { SUPABASE_URL: 'https://abc.supabase.co', SUPABASE_ANON_KEY: 'sb_publishable_x$&1', API_BASE_URL: 'https://a.workers.dev', FRONTEND_URL: 'https://f.pages.dev', GOOGLE_REDIRECT_URI: 'https://a.workers.dev/cb', ALLOW_SIGNUPS: 'false' };
+  for (const eol of ['\n', '\r\n']) {
+    it(`updates values and keeps comments intact with ${eol === '\n' ? 'LF' : 'CRLF'} line endings`, async () => {
+      const { setVars } = await import('../../scripts/toml-vars.mjs');
+      const out = setVars(sample.replace(/\r?\n/g, eol), vars);
+      const lines = out.split(eol);
+      expect(out.includes(eol === '\n' ? '\r' : '\n\n\n')).toBe(false);
+      for (const [k, v] of Object.entries(vars)) expect(lines).toContain(`${k} = ${JSON.stringify(v)}`);
+      expect(lines.filter((l) => l.startsWith('SUPABASE_URL')).length).toBe(1);
+      expect(lines.some((l) => l.startsWith('# Non-secret configuration.'))).toBe(true);
+      expect(out.split(eol).length).toBe(sample.split(/\r?\n/).length);
+      // a bare CR inside a TOML comment is invalid, so no line may contain one
+      expect(lines.some((l) => l.includes('\r'))).toBe(false);
+    });
+  }
+});

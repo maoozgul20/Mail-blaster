@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { loadEnv, need, root } from './env.mjs';
+import { setVars } from './toml-vars.mjs';
 
 const env = loadEnv();
 need(env, ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ENCRYPTION_KEY', 'API_BASE_URL', 'FRONTEND_URL']);
@@ -15,11 +16,7 @@ const file = join(root, 'worker/wrangler.toml');
 let toml = readFileSync(file, 'utf8');
 const vars = { SUPABASE_URL: env.SUPABASE_URL, SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY, API_BASE_URL: env.API_BASE_URL.replace(/\/$/, ''), FRONTEND_URL: env.FRONTEND_URL.replace(/\/$/, ''), GOOGLE_REDIRECT_URI: redirect };
 for (const k of ['ALLOW_SIGNUPS', 'ALLOWED_EXTENSION_IDS', 'MAX_JOBS_PER_RUN']) if (env[k]) vars[k] = env[k];
-for (const [k, v] of Object.entries(vars)) {
-  const re = new RegExp(`^#?\\s*${k}\\s*=.*$`, 'm');
-  const line = `${k} = ${JSON.stringify(v)}`;
-  toml = re.test(toml) ? toml.replace(re, line) : toml.replace(/(\[vars\][^\n]*\n)/, `$1${line}\n`);
-}
+toml = setVars(toml, vars);
 writeFileSync(file, toml);
 console.log('wrangler.toml [vars] updated.');
 
