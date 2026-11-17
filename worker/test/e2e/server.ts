@@ -86,7 +86,7 @@ createServer(async (req, res) => {
     const headers = new Headers();
     for (const [k, v] of Object.entries(req.headers)) if (typeof v === 'string') headers.set(k, v);
     const r = await app.fetch(new Request(url, { method: req.method, headers, body: body && req.method !== 'GET' && req.method !== 'HEAD' ? body : undefined }), env);
-    res.writeHead(r.status, Object.fromEntries(r.headers.entries()));
+    res.writeHead(r.status, Object.fromEntries((r.headers as any).entries()));
     res.end(Buffer.from(await r.arrayBuffer()));
   } catch (e) {
     console.error(e);

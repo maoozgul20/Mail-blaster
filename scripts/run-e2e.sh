@@ -15,5 +15,5 @@ npx vite preview --port 4173 --strictPort > "$SHOTS/preview.log" 2>&1 &
 for i in $(seq 1 30); do curl -sf localhost:4173/login >/dev/null 2>&1 && break; sleep 1; done
 SHOTS="$SHOTS" node e2e/dashboard.e2e.cjs
 if [ -f "$ROOT/extension/e2e/extension.e2e.cjs" ]; then
-  cd "$ROOT/extension" && API_BASE_URL=http://localhost:8788 npm run build >/dev/null && SHOTS="$SHOTS" node e2e/extension.e2e.cjs
+  cd "$ROOT/extension" && API_BASE_URL=http://localhost:8788 DASHBOARD_URL=http://localhost:4173 npm run build >/dev/null && SHOTS="$SHOTS" node e2e/extension.e2e.cjs
 fi

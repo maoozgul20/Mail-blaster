@@ -7,6 +7,7 @@ export interface Env {
   FRONTEND_URL: string;
   ALLOW_SIGNUPS?: string; // set to "false" after creating your account to close registration
   MAX_JOBS_PER_RUN?: string; // emails per cron invocation (default 3; lower to 1 if Workers Free CPU limit is hit)
+  ALLOWED_EXTENSION_IDS?: string; // optional: comma-separated Chrome extension IDs allowed to call the API (default: any extension, a bearer token is still required)
   ALLOWED_ORIGINS?: string; // optional extra comma-separated origins for CORS (e.g. http://localhost:5173 in development)
   // secrets (wrangler secret put ...)
   SUPABASE_SERVICE_ROLE_KEY: string;

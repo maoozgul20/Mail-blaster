@@ -50,6 +50,9 @@ export function createApp(deps: Deps) {
   app.use('/api/*', async (c, next) => {
     const allowed = new Set([origin(c.env.FRONTEND_URL), ...(c.env.ALLOWED_ORIGINS ?? '').split(',').map((s) => origin(s.trim())).filter(Boolean)]);
     const o = c.req.header('origin');
+    // The Chrome extension's service worker sends `Origin: chrome-extension://<id>`. Optionally pin it with ALLOWED_EXTENSION_IDS.
+    const extIds = (c.env.ALLOWED_EXTENSION_IDS ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+    if (o?.startsWith('chrome-extension://') && (extIds.length === 0 || extIds.includes(o.slice('chrome-extension://'.length)))) allowed.add(o);
     if (o && allowed.has(o)) {
       c.header('Access-Control-Allow-Origin', o);
       c.header('Vary', 'Origin');

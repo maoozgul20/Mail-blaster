@@ -81,6 +81,10 @@ describe('HTTP security basics', () => {
     expect(bad.headers.get('access-control-allow-origin')).toBeNull();
     const pre = await h.app.request('/api/campaigns', { method: 'OPTIONS', headers: { Origin: 'https://app.test' } }, ENV);
     expect(pre.status).toBe(204);
+    const ext = await h.app.request('/api/campaigns', { headers: { Origin: 'chrome-extension://abcdefghijklmnop', Authorization: `Bearer uid:${s.user}` } }, ENV);
+    expect(ext.status).toBe(200);
+    const pinned = await h.app.request('/api/campaigns', { headers: { Origin: 'chrome-extension://someoneelse', Authorization: `Bearer uid:${s.user}` } }, { ...ENV, ALLOWED_EXTENSION_IDS: 'abcdefghijklmnop' });
+    expect(pinned.status).toBe(403);
     const dev = await h.app.request('/api/campaigns', { method: 'OPTIONS', headers: { Origin: 'http://localhost:5173' } }, { ...ENV, ALLOWED_ORIGINS: 'http://localhost:5173' });
     expect(dev.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
   });
