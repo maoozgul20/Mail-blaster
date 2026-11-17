@@ -12,7 +12,7 @@ export interface SchedulerDeps {
   gmail: GmailApi;
   env: RenderEnv;
   getToken: (accountId: string, force?: boolean) => Promise<string>;
-  loadAttachment?: (a: ClaimedJob['campaign']['attachments'][number]) => Promise<MimeAttachment>;
+  loadAttachment?: (a: ClaimedJob['campaign']['attachments'][number], userId: string) => Promise<MimeAttachment>;
   /** tests only: simulated clock passed to the database as p_now. Production leaves this undefined (database clock). */
   clock?: () => Date;
   sleep?: (ms: number) => Promise<void>;
@@ -91,7 +91,7 @@ export async function processJob(d: SchedulerDeps, job: ClaimedJob): Promise<Out
   // 1. render (permanent failure on bad data: retrying cannot help)
   let rendered;
   try {
-    const attachments = d.loadAttachment ? await Promise.all((job.campaign.attachments ?? []).map((a) => d.loadAttachment!(a))) : [];
+    const attachments = d.loadAttachment ? await Promise.all((job.campaign.attachments ?? []).map((a) => d.loadAttachment!(a, job.job.user_id))) : [];
     rendered = await renderEmail(job, d.env, { attachments });
   } catch (e) {
     return fail({ kind: 'fail', cls: 'permanent', message: `Could not render email: ${(e as Error).message}` });

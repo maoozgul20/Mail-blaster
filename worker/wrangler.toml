@@ -1,0 +1,29 @@
+# MailBlaster AI - Cloudflare Worker (API + cron scheduler + tracking endpoints)
+# Everything here is available on the Cloudflare Workers FREE plan. No paid products are configured:
+# no Queues, no Durable Objects, no paid "limits" block. Run `npm run check:free` to verify.
+name = "mailblaster-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true            # free https://mailblaster-api.<your-subdomain>.workers.dev URL, no custom domain needed
+
+[triggers]
+# Free plan allows up to 5 cron triggers. Both are cheap: 1,440 + 288 invocations per day.
+crons = [
+  "* * * * *",    # send engine: claim due jobs from PostgreSQL -> Gmail API -> record outcome
+  "*/5 * * * *",  # reply / bounce detection + housekeeping
+]
+
+[vars]
+# Non-secret configuration. Edit these 5 values after creating your Supabase project and deploying the dashboard.
+SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co"
+SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY"   # the anon key is public by design; Row Level Security protects the data
+API_BASE_URL = "https://mailblaster-api.YOUR-SUBDOMAIN.workers.dev"
+FRONTEND_URL = "https://mailblaster-dashboard.pages.dev"
+GOOGLE_REDIRECT_URI = "https://mailblaster-api.YOUR-SUBDOMAIN.workers.dev/oauth/google/callback"
+# ALLOWED_ORIGINS = "http://localhost:5173"    # optional: extra browser origins for local dashboard development
+# ALLOW_SIGNUPS = "false"                      # set after you created your account so strangers cannot register
+# MAX_JOBS_PER_RUN = "3"                       # emails per cron run (see docs/FREE_TIER.md)
+
+# SECRETS (never put these in this file). Set them with:  npx wrangler secret put <NAME>
+#   SUPABASE_SERVICE_ROLE_KEY   GOOGLE_CLIENT_ID   GOOGLE_CLIENT_SECRET   ENCRYPTION_KEY
