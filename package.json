@@ -17,7 +17,8 @@
     "build:worker": "npm run build -w worker",
     "deploy:worker": "npm run deploy -w worker",
     "deploy:dashboard": "npm run deploy -w dashboard",
-    "check:free": "node scripts/check-free-tier.mjs"
+    "check:free": "node scripts/check-free-tier.mjs",
+    "e2e": "bash scripts/run-e2e.sh"
   },
   "engines": {
     "node": ">=20"

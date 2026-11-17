@@ -7,3 +7,4 @@ export * from './tracking';
 export * from './recipients';
 export * from './schedule';
 export * from './types';
+export * from './api';

@@ -426,7 +426,8 @@ begin
       select row_number() over (order by r.%I %s nulls last, r.id) as rn,
              r.id, r.email, r.first_name, r.last_name, r.company, r.status, r.sent_at, r.open_count, r.opened_at, r.last_opened_at,
              r.click_count, r.replied_at, r.reply_preview, r.follow_ups_sent, r.failure_reason, r.skip_reason, r.stop_reason, r.followups_stopped,
-             (select min(j.run_after) from public.sending_jobs j where j.recipient_id = r.id and j.status = 'queued' and j.step_number > 0) as next_followup_at
+             (select min(j.run_after) from public.sending_jobs j where j.recipient_id = r.id and j.status = 'queued' and j.step_number > 0) as next_followup_at,
+             (select j.id from public.sending_jobs j where j.recipient_id = r.id and j.status = 'ambiguous' limit 1) as ambiguous_job_id
         from public.campaign_recipients r
        where r.campaign_id = $1 and r.user_id = auth.uid() and (%s)
          and ($2 is null or $2 = '' or r.email ilike concat('%%', $2, '%%') or coalesce(r.first_name, '') ilike concat('%%', $2, '%%')
