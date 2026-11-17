@@ -1,0 +1,17 @@
+{
+  "name": "mailblaster-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MailBlaster AI - a free-tier, cloud-hosted GMass-style outreach platform (Chrome extension + dashboard + Cloudflare Worker + Supabase).",
+  "workspaces": ["packages/*", "worker", "dashboard", "extension"],
+  "scripts": {
+    "test": "npm run test -w worker && npm run test -w @mailblaster/shared",
+    "typecheck": "npm run typecheck -w @mailblaster/shared && npm run typecheck -w worker && npm run typecheck -w dashboard && npm run typecheck -w extension",
+    "build:dashboard": "npm run build -w dashboard",
+    "build:extension": "npm run build -w extension",
+    "build:worker": "npm run build -w worker",
+    "deploy:worker": "npm run deploy -w worker",
+    "deploy:dashboard": "npm run deploy -w dashboard"
+  },
+  "engines": { "node": ">=20" }
+}
